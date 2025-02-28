@@ -1,0 +1,12 @@
+# Rust
+blockchain_core/target/
+blockchain_core/Cargo.lock
+
+# Go
+blockchain_tools/bin/
+blockchain_tools/pkg/
+
+# General
+.DS_Store
+.idea/
+.vscode/

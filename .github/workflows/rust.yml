@@ -1,0 +1,40 @@
+name: Rust CI
+
+# Trigger the workflow on push or pull request events
+on:
+  push:
+    paths:
+      - 'blockchain_core/**'  # Only trigger if changes are in the Rust project
+  pull_request:
+    paths:
+      - 'blockchain_core/**'
+
+# Define the jobs to run
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+    steps:
+      # Step 1: Check out the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up Rust
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable  # Use the stable Rust toolchain
+          override: true     # Override any existing Rust installation
+
+      # Step 3: Cache Cargo dependencies to speed up builds
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry  # Cache the Cargo registry
+          key: ${{ runner.os }}-cargo-${{ hashFiles('blockchain_core/Cargo.toml') }}  # Unique key for the cache
+
+      # Step 4: Build the Rust project
+      - name: Build
+        run: cargo build --manifest-path blockchain_core/Cargo.toml
+
+      # Step 5: Run tests for the Rust project
+      - name: Test
+        run: cargo test --manifest-path blockchain_core/Cargo.toml

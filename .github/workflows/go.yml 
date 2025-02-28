@@ -1,0 +1,39 @@
+name: Go CI
+
+# Trigger the workflow on push or pull request events
+on:
+  push:
+    paths:
+      - 'blockchain_tools/**'  # Only trigger if changes are in the Go project
+  pull_request:
+    paths:
+      - 'blockchain_tools/**'
+
+# Define the jobs to run
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+    steps:
+      # Step 1: Check out the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'  # Use Go 1.21 (or the version you need)
+
+      # Step 3: Cache Go modules to speed up builds
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod  # Cache the Go modules directory
+          key: ${{ runner.os }}-go-${{ hashFiles('blockchain_tools/go.mod') }}  # Unique key for the cache
+
+      # Step 4: Build the Go project
+      - name: Build
+        run: go build -v ./blockchain_tools/...
+
+      # Step 5: Run tests for the Go project
+      - name: Test
+        run: go test -v ./blockchain_tools/...
