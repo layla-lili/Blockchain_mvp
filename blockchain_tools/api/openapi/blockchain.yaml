@@ -8,8 +8,8 @@ info:
     url: https://github.com/layla-lili/blockchain_mvp
 
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Local development server
+  - url: /api/v1
+    description: Development server
 
 paths:
   /blocks/{number}:
@@ -31,7 +31,8 @@ paths:
 
   /transactions:
     post:
-      summary: Send new transaction
+      summary: Send a new transaction
+      operationId: sendTransaction
       requestBody:
         required: true
         content:
@@ -40,11 +41,49 @@ paths:
               $ref: "#/components/schemas/TransactionRequest"
       responses:
         "200":
-          description: Transaction accepted
+          description: Transaction sent successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionResponse"
+        "400":
+          description: Invalid transaction parameters
+    get:
+      summary: List recent transactions
+      operationId: listTransactions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /transactions/{hash}:
+    get:
+      summary: Get transaction details
+      operationId: getTransaction
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
 
   /accounts/{address}/balance:
     get:
@@ -90,6 +129,13 @@ components:
           type: string
         value:
           type: string
+        status:
+          type: string
+          enum: [pending, confirmed, failed]
+        blockNumber:
+          type: integer
+        timestamp:
+          type: integer
 
     TransactionRequest:
       type: object
@@ -97,18 +143,28 @@ components:
         - to
         - value
       properties:
+        from:
+          type: string
+          description: Sender address (optional for test transactions)
         to:
           type: string
+          description: Recipient address
         value:
           type: string
+          description: Transaction value in wei
         data:
           type: string
+          description: Optional transaction data
 
     TransactionResponse:
       type: object
       properties:
         hash:
           type: string
+          description: Transaction hash
+        status:
+          type: string
+          enum: [pending, confirmed, failed]
 
     Balance:
       type: object

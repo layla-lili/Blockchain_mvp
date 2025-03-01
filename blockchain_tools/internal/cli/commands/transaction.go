@@ -53,15 +53,23 @@ func newGetTransactionCmd() *cobra.Command {
 
 func newSendTransactionCmd() *cobra.Command {
 	var (
-		to    string
-		value uint64
-		data  string
+		to     string
+		value  uint64
+		data   string
+		isTest bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "send",
 		Short: "Send a new transaction",
 		Long:  `Create and send a new transaction to the blockchain.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			isTest, _ := cmd.Flags().GetBool("test")
+			if !isTest && to == "" {
+				return fmt.Errorf("required flag \"to\" not set")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 
@@ -71,6 +79,36 @@ func newSendTransactionCmd() *cobra.Command {
 				return fmt.Errorf("failed to create client: %w", err)
 			}
 
+			if isTest {
+				// Handle test transaction between first two accounts
+				accounts, err := client.GetAccounts(ctx)
+				if err != nil {
+					return fmt.Errorf("failed to get test accounts: %w", err)
+				}
+				if len(accounts) < 2 {
+					return fmt.Errorf("not enough test accounts available")
+				}
+
+				tx := &types.Transaction{
+					From:  accounts[0].Hex(),
+					To:    accounts[1].Hex(),
+					Value: 1000000000000000000, // 1 ETH in wei
+				}
+
+				hash, err := client.SendTransaction(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("failed to send test transaction: %w", err)
+				}
+
+				cmd.Printf("Test transaction sent successfully!\n")
+				cmd.Printf("From: %s\n", accounts[0].Hex())
+				cmd.Printf("To: %s\n", accounts[1].Hex())
+				cmd.Printf("Value: 1 ETH\n")
+				cmd.Printf("Hash: %s\n", hash)
+				return nil
+			}
+
+			// Handle regular transaction
 			tx := &types.Transaction{
 				To:    to,
 				Value: value,
@@ -82,16 +120,16 @@ func newSendTransactionCmd() *cobra.Command {
 				return fmt.Errorf("failed to send transaction: %w", err)
 			}
 
-			fmt.Printf("Transaction sent successfully! Hash: %s\n", hash)
+			cmd.Printf("Transaction sent successfully! Hash: %s\n", hash)
 			return nil
 		},
 	}
 
-	// Transaction-specific flags
+	// Add flags
 	cmd.Flags().StringVar(&to, "to", "", "Recipient address")
-	cmd.Flags().Uint64Var(&value, "value", 0, "Transaction value")
+	cmd.Flags().Uint64Var(&value, "value", 0, "Transaction value in wei")
 	cmd.Flags().StringVar(&data, "data", "", "Transaction data (optional)")
-	cmd.MarkFlagRequired("to")
+	cmd.Flags().BoolVar(&isTest, "test", false, "Send a test transaction between first two accounts")
 
 	return cmd
 }

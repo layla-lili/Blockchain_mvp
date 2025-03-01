@@ -10,7 +10,7 @@ DATE    := $(shell date -u '+%Y-%m-%d-%H:%M-%Z')
 # Build flags
 LDFLAGS=-ldflags "-X github.com/layla-lili/blockchain_tools/internal/cli/commands.Version=$(VERSION) -X github.com/layla-lili/blockchain_tools/internal/cli/commands.GitCommit=$(COMMIT) -X github.com/layla-lili/blockchain_tools/internal/cli/commands.BuildDate=$(DATE)"
 
-.PHONY: all build clean run test lint download-swagger-ui
+.PHONY: all build clean run test lint download-swagger-ui start-local dev-env tx-test tx-send
 
 # Default target
 all: build
@@ -59,14 +59,45 @@ download-swagger-ui:
 		tar xz -C /tmp && \
 		cp -r /tmp/swagger-ui-5.11.2/dist/* internal/api/swagger/swagger-ui/
 
+# Start local environment
+start-local: start-node start-api
+	@echo "Testing connection..."
+	@sleep 2
+	@make tx-test
+
+start-node:
+	@echo "Starting Anvil node..."
+	anvil --chain-id 1337 --block-time 2
+
+start-api:
+	@echo "Starting API server..."
+	cd cmd/blockchain-api && go run .
+
+start-cli:
+	@echo "Starting CLI..."
+	cd cmd/blockchain-cli && go run . --rpc-url http://localhost:8545
+
+# Transaction commands
+tx-test:
+	@echo "Sending test transaction..."
+	./bin/$(BINARY_NAME) tx send --test
+
+tx-send:
+	@echo "Usage: make tx-send TO=<address> VALUE=<wei_amount>"
+	@if [ -n "$(TO)" ] && [ -n "$(VALUE)" ]; then \
+		./bin/$(BINARY_NAME) tx send --to $(TO) --value $(VALUE); \
+	fi
+
 # Help
 help:
 	@echo "Blockchain Tools Makefile"
 	@echo "Available targets:"
-	@echo "  build     - Build the blockchain-cli binary"
-	@echo "  install   - Install the blockchain-cli binary"
-	@echo "  clean     - Remove build artifacts"
-	@echo "  test      - Run tests"
-	@echo "  lint      - Run linter"
-	@echo "  run       - Build and run the blockchain-cli"
-	@echo "  dist      - Create distribution packages"
+	@echo "  build       - Build the blockchain-cli binary"
+	@echo "  tx-test    - Send a test transaction between first two accounts"
+	@echo "  tx-send    - Send a transaction (requires TO and VALUE)"
+	@echo "  clean       - Remove build artifacts"
+	@echo "  test        - Run tests"
+	@echo "  lint        - Run linter"
+	@echo "  run         - Build and run the blockchain-cli"
+	@echo "  dist        - Create distribution packages"
+	@echo "  start-local - Start local environment with Anvil"

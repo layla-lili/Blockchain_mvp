@@ -50,14 +50,16 @@ func main() {
 
 	// Serve Swagger UI
 	swaggerCfg := swagger.Config{
-		Title:    "Blockchain API",
-		SpecURL:  "/openapi.json",
-		BasePath: "/docs",
+		Title:       "Blockchain API",
+		SpecURL:     "/openapi.json",
+		BasePath:    "/docs",
+		Description: "API for interacting with the blockchain",
 	}
 	router.GET("/docs/*any", swagger.Handler(swaggerCfg))
 
-	// Serve OpenAPI spec
+	// Serve OpenAPI spec with CORS headers
 	router.GET("/openapi.json", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(http.StatusOK, spec)
 	})
 
