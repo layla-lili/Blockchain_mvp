@@ -10,7 +10,7 @@ DATE    := $(shell date -u '+%Y-%m-%d-%H:%M-%Z')
 # Build flags
 LDFLAGS=-ldflags "-X github.com/layla-lili/blockchain_tools/internal/cli/commands.Version=$(VERSION) -X github.com/layla-lili/blockchain_tools/internal/cli/commands.GitCommit=$(COMMIT) -X github.com/layla-lili/blockchain_tools/internal/cli/commands.BuildDate=$(DATE)"
 
-.PHONY: all build clean run test lint
+.PHONY: all build clean run test lint download-swagger-ui
 
 # Default target
 all: build
@@ -50,6 +50,14 @@ dist:
 	GOOS=linux GOARCH=amd64 $(GO) build $(GOFLAGS) $(LDFLAGS) -o dist/${BINARY_NAME}-linux-amd64 ./cmd/blockchain-cli
 	GOOS=darwin GOARCH=amd64 $(GO) build $(GOFLAGS) $(LDFLAGS) -o dist/${BINARY_NAME}-darwin-amd64 ./cmd/blockchain-cli
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) $(LDFLAGS) -o dist/${BINARY_NAME}-windows-amd64.exe ./cmd/blockchain-cli
+
+# Download Swagger UI
+download-swagger-ui:
+	@echo "Downloading Swagger UI..."
+	@mkdir -p internal/api/swagger/swagger-ui
+	@curl -L https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.11.2.tar.gz | \
+		tar xz -C /tmp && \
+		cp -r /tmp/swagger-ui-5.11.2/dist/* internal/api/swagger/swagger-ui/
 
 # Help
 help:

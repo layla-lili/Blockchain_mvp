@@ -1,0 +1,119 @@
+openapi: 3.0.0
+info:
+  title: Blockchain API
+  description: API for interacting with the blockchain
+  version: 1.0.0
+  contact:
+    name: Layla Abdullah
+    url: https://github.com/layla-lili/blockchain_mvp
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+paths:
+  /blocks/{number}:
+    get:
+      summary: Get block by number
+      parameters:
+        - name: number
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Block details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+
+  /transactions:
+    post:
+      summary: Send new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRequest"
+      responses:
+        "200":
+          description: Transaction accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+
+  /accounts/{address}/balance:
+    get:
+      summary: Get account balance
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Account balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+
+components:
+  schemas:
+    Block:
+      type: object
+      properties:
+        hash:
+          type: string
+        number:
+          type: integer
+        timestamp:
+          type: integer
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Transaction:
+      type: object
+      properties:
+        hash:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        value:
+          type: string
+
+    TransactionRequest:
+      type: object
+      required:
+        - to
+        - value
+      properties:
+        to:
+          type: string
+        value:
+          type: string
+        data:
+          type: string
+
+    TransactionResponse:
+      type: object
+      properties:
+        hash:
+          type: string
+
+    Balance:
+      type: object
+      properties:
+        address:
+          type: string
+        amount:
+          type: string
